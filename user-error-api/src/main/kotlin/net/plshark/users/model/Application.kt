@@ -1,3 +1,5 @@
 package net.plshark.users.model
 
-data class Application(val id: Long, val name: String)
+import org.springframework.data.annotation.Id
+
+data class Application(@Id val id: Long = 0, val name: String)

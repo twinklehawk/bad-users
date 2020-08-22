@@ -4,7 +4,7 @@ import net.plshark.errors.DuplicateException
 import net.plshark.errors.ObjectNotFoundException
 import net.plshark.users.model.Role
 import net.plshark.users.model.RoleCreate
-import net.plshark.users.repo.ApplicationsRepository
+import net.plshark.users.repo.ApplicationRepository
 import net.plshark.users.repo.RolesRepository
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Component
@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono
  * Role management service implementation
  */
 @Component
-class RolesServiceImpl(private val rolesRepo: RolesRepository, private val appsRepo: ApplicationsRepository) :
+class RolesServiceImpl(private val rolesRepo: RolesRepository, private val appRepo: ApplicationRepository) :
     RolesService {
 
     override fun create(role: RoleCreate): Mono<Role> {
@@ -35,7 +35,7 @@ class RolesServiceImpl(private val rolesRepo: RolesRepository, private val appsR
     }
 
     override fun get(application: String, name: String): Mono<Role> {
-        return appsRepo[application]
+        return appRepo.findByName(application)
             .flatMap { app -> rolesRepo[app.id, name] }
     }
 

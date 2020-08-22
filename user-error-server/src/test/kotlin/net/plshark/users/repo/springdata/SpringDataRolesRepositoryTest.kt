@@ -2,7 +2,7 @@ package net.plshark.users.repo.springdata
 
 import io.r2dbc.spi.ConnectionFactories
 import net.plshark.testutils.DbIntTest
-import net.plshark.users.model.ApplicationCreate
+import net.plshark.users.model.Application
 import net.plshark.users.model.RoleCreate
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -25,7 +25,7 @@ class SpringDataRolesRepositoryTest : DbIntTest() {
 
     @Test
     fun `inserting a role returns the inserted role with the ID set`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
 
         val inserted = repo.insert(RoleCreate(app.id, "test-role")).block()!!
 
@@ -36,7 +36,7 @@ class SpringDataRolesRepositoryTest : DbIntTest() {
 
     @Test
     fun `can retrieve a previously inserted role by ID`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
         val inserted = repo.insert(RoleCreate(app.id, "test-role")).block()!!
 
         val role = repo[inserted.id].block()
@@ -54,7 +54,7 @@ class SpringDataRolesRepositoryTest : DbIntTest() {
 
     @Test
     fun `can retrieve a previously inserted role by name`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
         val inserted = repo.insert(RoleCreate(app.id, "test-role")).block()!!
 
         val role = repo[app.id, "test-role"].block()
@@ -72,7 +72,7 @@ class SpringDataRolesRepositoryTest : DbIntTest() {
 
     @Test
     fun `can delete a previously inserted role by ID`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
         val inserted = repo.insert(RoleCreate(app.id, "test-role")).block()!!
 
         repo.delete(inserted.id).block()
@@ -88,23 +88,23 @@ class SpringDataRolesRepositoryTest : DbIntTest() {
 
     @Test
     fun `getRoles should return all results when there are less than max results`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
+        repo.deleteAll().block()
         repo.insert(RoleCreate(app.id, "name"))
                 .then(repo.insert(RoleCreate(app.id, "name2"))).block()
 
         val roles = repo.getRoles(5, 0).collectList().block()!!
 
-        assertEquals(4, roles.size)
+        assertEquals(2, roles.size)
         // these are inserted by the migration scripts
-        assertEquals("users-user", roles[0].name)
-        assertEquals("users-admin", roles[1].name)
-        assertEquals("name", roles[2].name)
-        assertEquals("name2", roles[3].name)
+        assertEquals("name", roles[0].name)
+        assertEquals("name2", roles[1].name)
     }
 
     @Test
     fun `getRoles should return up to max results when there are more results`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
+        repo.deleteAll().block()
         repo.insert(RoleCreate(app.id, "name")).block()
         repo.insert(RoleCreate(app.id, "name2")).block()
         repo.insert(RoleCreate(app.id, "name3")).block()
@@ -112,28 +112,28 @@ class SpringDataRolesRepositoryTest : DbIntTest() {
         val roles = repo.getRoles(2, 0).collectList().block()!!
 
         assertEquals(2, roles.size)
-        assertEquals("users-user", roles[0].name)
-        assertEquals("users-admin", roles[1].name)
+        assertEquals("name", roles[0].name)
+        assertEquals("name2", roles[1].name)
     }
 
     @Test
     fun `getRoles should start at the correct offset`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
+        repo.deleteAll().block()
         repo.insert(RoleCreate(app.id, "name"))
                 .then(repo.insert(RoleCreate(app.id, "name2")))
                 .then(repo.insert(RoleCreate(app.id, "name3"))).block()
 
         val roles = repo.getRoles(2, 2).collectList().block()!!
 
-        assertEquals(2, roles.size)
-        assertEquals("name", roles[0].name)
-        assertEquals("name2", roles[1].name)
+        assertEquals(1, roles.size)
+        assertEquals("name3", roles[0].name)
     }
 
     @Test
     fun `getRolesForApplication should return all rows with a matching application ID`() {
-        val app = appsRepo.insert(ApplicationCreate("app")).block()!!
-        val app2 = appsRepo.insert(ApplicationCreate("app2")).block()!!
+        val app = appsRepo.insert(Application(name = "app")).block()!!
+        val app2 = appsRepo.insert(Application(name = "app2")).block()!!
         repo.insert(RoleCreate(app.id, "r1")).block()
         repo.insert(RoleCreate(app.id, "r2")).block()
         repo.insert(RoleCreate(app2.id, "r3")).block()

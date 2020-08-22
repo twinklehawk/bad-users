@@ -40,7 +40,7 @@ class RolesController(private val rolesService: RolesService, private val appSer
         @PathVariable("application") application: String,
         @RequestBody role: String
     ): Mono<Role> {
-        return appService[application]
+        return appService.findByName(application)
             .switchIfEmpty { Mono.error(ObjectNotFoundException("Application $application not found")) }
             .map { RoleCreate(it.id, role) }
             .flatMap { rolesService.create(it) }

@@ -4,7 +4,6 @@ import io.mockk.every
 import io.mockk.mockk
 import net.plshark.errors.ObjectNotFoundException
 import net.plshark.users.model.Application
-import net.plshark.users.model.ApplicationCreate
 import net.plshark.users.service.ApplicationsService
 import org.junit.jupiter.api.Test
 import reactor.core.publisher.Flux
@@ -19,18 +18,18 @@ class ApplicationsControllerTest {
     @Test
     fun `getting an application should pass through whatever the service returns`() {
         val app = Application(123, "test-app")
-        every { applicationsService["test-app"] } returns Mono.just(app)
+        every { applicationsService.findByName("test-app") } returns Mono.just(app)
 
-        StepVerifier.create(controller["test-app"])
+        StepVerifier.create(controller.find("test-app"))
                 .expectNext(app)
                 .verifyComplete()
     }
 
     @Test
     fun `getting an application should throw an exception when the application does not exist`() {
-        every { applicationsService["test-app"] } returns Mono.empty()
+        every { applicationsService.findByName("test-app") } returns Mono.empty()
 
-        StepVerifier.create(controller["test-app"])
+        StepVerifier.create(controller.find("test-app"))
                 .verifyError(ObjectNotFoundException::class.java)
     }
 
@@ -38,9 +37,9 @@ class ApplicationsControllerTest {
     fun `getting all applications should pass through whatever the service returns`() {
         val app1 = Application(1, "app1")
         val app2 = Application(2, "app2")
-        every { applicationsService.getApplications(100, 0) } returns Flux.just(app1, app2)
+        every { applicationsService.findAll() } returns Flux.just(app1, app2)
 
-        StepVerifier.create(controller.getApplications(100, 0))
+        StepVerifier.create(controller.findAll(100, 0))
                 .expectNext(app1)
                 .expectNext(app2)
                 .verifyComplete()
@@ -48,7 +47,7 @@ class ApplicationsControllerTest {
 
     @Test
     fun `inserting should pass through whatever the service returns`() {
-        val request = ApplicationCreate("name")
+        val request = Application(name = "name")
         val created = Application(1, "name")
         every { applicationsService.create(request) } returns Mono.just(created)
 
@@ -58,8 +57,20 @@ class ApplicationsControllerTest {
     }
 
     @Test
+    fun `inserting should set the ID to 0 if it is not already 0`() {
+        val request = Application(5, "name")
+        val expected = request.copy(id = 0)
+        val created = Application(1, "name")
+        every { applicationsService.create(expected) } returns Mono.just(created)
+
+        StepVerifier.create(controller.create(request))
+            .expectNext(created)
+            .verifyComplete()
+    }
+
+    @Test
     fun `deleting should complete when the service completes`() {
-        every { applicationsService.delete("test-app") } returns Mono.empty()
+        every { applicationsService.deleteByName("test-app") } returns Mono.empty()
 
         StepVerifier.create(controller.delete("test-app"))
                 .verifyComplete()

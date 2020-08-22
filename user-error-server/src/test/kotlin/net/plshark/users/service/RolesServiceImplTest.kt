@@ -7,7 +7,7 @@ import net.plshark.errors.ObjectNotFoundException
 import net.plshark.users.model.Application
 import net.plshark.users.model.Role
 import net.plshark.users.model.RoleCreate
-import net.plshark.users.repo.ApplicationsRepository
+import net.plshark.users.repo.ApplicationRepository
 import net.plshark.users.repo.RolesRepository
 import org.junit.jupiter.api.Test
 import org.springframework.dao.DataIntegrityViolationException
@@ -19,8 +19,8 @@ import reactor.test.publisher.PublisherProbe
 class RolesServiceImplTest {
 
     private val rolesRepo = mockk<RolesRepository>()
-    private val appsRepo = mockk<ApplicationsRepository>()
-    private val service = RolesServiceImpl(rolesRepo, appsRepo)
+    private val appRepo = mockk<ApplicationRepository>()
+    private val service = RolesServiceImpl(rolesRepo, appRepo)
 
     @Test
     fun `creating should save a role and return the saved role`() {
@@ -55,7 +55,7 @@ class RolesServiceImplTest {
 
     @Test
     fun `deleting a role by name should look up the role then delete the role`() {
-        every { appsRepo["app"] } returns Mono.just(Application(123, "app"))
+        every { appRepo.findByName("app") } returns Mono.just(Application(123, "app"))
         every { rolesRepo[123, "role"] } returns Mono.just(Role(456, 123, "role"))
         val rolesProbe = PublisherProbe.empty<Void>()
         every { rolesRepo.delete(456) } returns rolesProbe.mono()
@@ -67,7 +67,7 @@ class RolesServiceImplTest {
 
     @Test
     fun `should be able to retrieve a role by name`() {
-        every { appsRepo["app-name"] } returns Mono.just(Application(132, "app-name"))
+        every { appRepo.findByName("app-name") } returns Mono.just(Application(132, "app-name"))
         val role = Role(123, 132, "role-name")
         every { rolesRepo[132, "role-name"] } returns Mono.just(role)
 
@@ -81,7 +81,7 @@ class RolesServiceImplTest {
 
     @Test
     fun `should return an error when a required role's application does not exist`() {
-        every { appsRepo["app-name"] } returns Mono.empty()
+        every { appRepo.findByName("app-name") } returns Mono.empty()
 
         StepVerifier.create(service.getRequired("app-name", "role-name"))
                 .verifyError(ObjectNotFoundException::class.java)
@@ -89,7 +89,7 @@ class RolesServiceImplTest {
 
     @Test
     fun `should return an error when a required role does not exist`() {
-        every { appsRepo["app-name"] } returns Mono.just(Application(132, "app-name"))
+        every { appRepo.findByName("app-name") } returns Mono.just(Application(132, "app-name"))
         every { rolesRepo[132, "role-name"] } returns Mono.empty()
 
         StepVerifier.create(service.getRequired("app-name", "role-name"))

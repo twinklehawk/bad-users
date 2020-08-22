@@ -25,6 +25,9 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("io.mockk:mockk")
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
+    }
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.flywaydb:flyway-core")
     testRuntimeOnly("org.postgresql:postgresql")

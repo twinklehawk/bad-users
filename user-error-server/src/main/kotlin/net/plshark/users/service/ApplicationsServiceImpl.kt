@@ -2,10 +2,9 @@ package net.plshark.users.service
 
 import net.plshark.errors.DuplicateException
 import net.plshark.users.model.Application
-import net.plshark.users.model.ApplicationCreate
 import net.plshark.users.model.Role
-import net.plshark.users.repo.ApplicationsRepository
 import net.plshark.users.repo.RolesRepository
+import net.plshark.users.repo.ApplicationRepository
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Flux
@@ -15,29 +14,27 @@ import reactor.core.publisher.Mono
  * Applications management service implementation
  */
 @Component
-class ApplicationsServiceImpl(private val appsRepo: ApplicationsRepository, private val rolesRepo: RolesRepository) :
+class ApplicationsServiceImpl(private val appRepo: ApplicationRepository, private val rolesRepo: RolesRepository) :
     ApplicationsService {
 
-    override fun get(name: String): Mono<Application> {
-        return appsRepo[name]
+    override fun findByName(name: String): Mono<Application> {
+        return appRepo.findByName(name)
     }
 
-    override fun getApplications(limit: Int, offset: Long): Flux<Application> {
-        // TODO
-        return Flux.empty()
+    override fun findAll(): Flux<Application> {
+        return appRepo.findAll()
     }
 
-    override fun create(application: ApplicationCreate): Mono<Application> {
-        return appsRepo.insert(application)
+    override fun create(application: Application): Mono<Application> {
+        require(application.id == 0L) { "ID must be 0 when creating an application" }
+        return appRepo.save(application)
             .onErrorMap(DataIntegrityViolationException::class.java) { e: DataIntegrityViolationException ->
                 DuplicateException("An application with name ${application.name} already exists", e)
             }
     }
 
-    override fun delete(name: String): Mono<Void> {
-        return get(name)
-            .map { application -> application.id }
-            .flatMap { id -> appsRepo.delete(id) }
+    override fun deleteByName(name: String): Mono<Void> {
+        return appRepo.deleteByName(name)
     }
 
     fun getApplicationRoles(id: Long): Flux<Role> {

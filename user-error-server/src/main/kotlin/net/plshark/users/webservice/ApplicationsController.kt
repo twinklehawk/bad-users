@@ -2,7 +2,6 @@ package net.plshark.users.webservice
 
 import net.plshark.errors.ObjectNotFoundException
 import net.plshark.users.model.Application
-import net.plshark.users.model.ApplicationCreate
 import net.plshark.users.service.ApplicationsService
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -24,51 +23,31 @@ import javax.validation.constraints.Min
 @RequestMapping("/applications")
 class ApplicationsController(private val applicationsService: ApplicationsService) {
 
-    /**
-     * Get all applications up to the maximum result count and starting at an offset
-     * @param limit the maximum number of results to return
-     * @param offset the offset to start the list at
-     * @return the users
-     */
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getApplications(
+    fun findAll(
         @RequestParam(value = "limit", defaultValue = "50") limit: @Min(1) Int,
         @RequestParam(value = "offset", defaultValue = "0") offset: @Min(0) Long
     ): Flux<Application> {
-        return applicationsService.getApplications(limit, offset)
+        return applicationsService.findAll()
     }
 
-    /**
-     * Retrieve an application
-     * @param name the application name
-     * @return the application
-     */
     @GetMapping(path = ["/{name}"], produces = [MediaType.APPLICATION_JSON_VALUE])
-    operator fun get(@PathVariable("name") name: String): Mono<Application> {
-        return applicationsService[name]
+    fun find(@PathVariable("name") name: String): Mono<Application> {
+        return applicationsService.findByName(name)
             .switchIfEmpty(Mono.error { ObjectNotFoundException("No application found for $name") })
     }
 
-    /**
-     * Insert a new application
-     * @param application the application
-     * @return the inserted application
-     */
     @PostMapping(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.APPLICATION_JSON_VALUE]
     )
-    fun create(@RequestBody application: ApplicationCreate): Mono<Application> {
-        return applicationsService.create(application)
+    fun create(@RequestBody application: Application): Mono<Application> {
+        val app = if (application.id != 0L) application.copy(id = 0L) else application
+        return applicationsService.create(app)
     }
 
-    /**
-     * Delete an application
-     * @param name the application name
-     * @return when complete
-     */
     @DeleteMapping("/{name}")
     fun delete(@PathVariable("name") name: String): Mono<Void> {
-        return applicationsService.delete(name)
+        return applicationsService.deleteByName(name)
     }
 }

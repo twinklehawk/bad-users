@@ -21,6 +21,7 @@ dependencies {
     api("org.slf4j:slf4j-api")
     api("io.projectreactor:reactor-core")
     api("com.fasterxml.jackson.core:jackson-annotations")
+    compileOnly("org.springframework.data:spring-data-commons")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation(kotlin("reflect"))

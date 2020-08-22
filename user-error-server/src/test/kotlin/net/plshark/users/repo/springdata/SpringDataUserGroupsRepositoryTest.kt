@@ -101,7 +101,7 @@ class SpringDataUserGroupsRepositoryTest : DbIntTest() {
 
     @Test
     fun `retrieving roles should return each role in each group the user belongs to`() {
-        val app1 = appsRepo.insert(ApplicationCreate("test-app")).block()!!
+        val app1 = appsRepo.insert(Application(name = "test-app")).block()!!
         val role1 = rolesRepo.insert(RoleCreate(app1.id, "role1")).block()!!
         val role2 = rolesRepo.insert(RoleCreate(app1.id, "role2")).block()!!
         rolesRepo.insert(RoleCreate(app1.id, "role3")).block()

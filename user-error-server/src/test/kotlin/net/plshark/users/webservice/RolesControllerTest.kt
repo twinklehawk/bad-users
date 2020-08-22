@@ -24,7 +24,7 @@ class RolesControllerTest {
     @Test
     fun `insert passes role through to service`() {
         val inserted = Role(100, 12, "app")
-        every { appService["app"] } returns Mono.just(Application(12, "app"))
+        every { appService.findByName("app") } returns Mono.just(Application(12, "app"))
         every { service.create(RoleCreate(12, "admin")) } returns Mono.just(inserted)
 
         StepVerifier.create(controller.create("app", "admin"))
@@ -34,7 +34,7 @@ class RolesControllerTest {
 
     @Test
     fun `insert returns an ObjectNotFoundException if the application is not found`() {
-        every { appService["app"] } returns Mono.empty()
+        every { appService.findByName("app") } returns Mono.empty()
 
         StepVerifier.create(controller.create("app", "admin"))
             .verifyError(ObjectNotFoundException::class.java)
